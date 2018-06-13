@@ -247,10 +247,10 @@ def get_results(session, companyID, page):
     url += str(page*25)
     try:
         result = session.get(url)
-    except:
-        choice = input(warnBox + "Connection Error ! Continue ? [Y/N]")
-        if choice == "Y":
-            return ""
+    except Exception as e:
+        choice = input("{} Connection Error ({})! Continue ? [Y/N]".format(warnBox, str(e)))
+        if choice is "Y":
+            return get_results(session, companyID, page)
         else:
             exit()
 
@@ -271,14 +271,12 @@ def scrape_info(session, companyID, staffCount, company):
     set_loops(staffCount)
     for page in range(0, searchDepth):
         newUsers = 0
-        sys.stdout.flush()
-        sys.stdout.write(okBox + 'OK, looking for results on loop numer ' + str(page+1) + '...        ')
+        print(okBox + 'OK, looking for results on loop number ' + str(page+1) + '...        ')
         result = get_results(session, companyID, page)
         firstName = re.findall(r'"firstName":"(.*?)"', result)
         lastName = re.findall(r'"lastName":"(.*?)"', result)
         position = re.findall(r'"text":"(.*?)"', result)
         if len(firstName) == 0 and len(lastName) == 0:
-            sys.stdout.write('\n')
             print(okBox + 'We have hit the end of the road! Moving on...')
             break
         for first,last,pos in zip(firstName,lastName,position):
@@ -287,7 +285,7 @@ def scrape_info(session, companyID, staffCount, company):
             else:
                 userList.append(LinkedinUser(first, last, pos, company))
                 newUsers +=1
-        sys.stdout.write('    ' + okBox + 'Added ' + str(newUsers) + ' new names. Running total: '\
+        print('    ' + okBox + 'Added ' + str(newUsers) + ' new names. Running total: '\
                          + str(len(userList)) + '              \r')
         time.sleep(pageDelay)
     return userList
