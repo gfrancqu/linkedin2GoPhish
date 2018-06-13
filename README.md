@@ -5,7 +5,7 @@ this script allow you to craft email addresses from linkedin organization resear
 This is a pure web-scraper, no API key required. You use your valid LinkedIn username and password to login, it will create several lists of emails for all employees of a company you point it at, based on the format you give hime (firstname.lastnam@domaine, f.lastname@domain, etc).
 
 ```
-usage: linkedin2username.py [-h] [-p PASSWORD] [-n DOMAIN] [-d DEPTH]
+usage: linkedin2GoPhish.py [-h] [-p PASSWORD] [-n DOMAIN] [-d DEPTH]
                             [-s SLEEP] [-f FORMAT] [-u URL] [-k APIKEY]
                             username company
 
