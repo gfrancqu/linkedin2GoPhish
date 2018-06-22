@@ -59,6 +59,7 @@ password = args.password or getpass.getpass()
 apiKey = args.apikey or None
 host = args.url or None
 
+
 # Set up some nice colors
 class bcolors:
     OKGREEN = '\033[92m'
@@ -81,15 +82,16 @@ class EmailFormatter:
 
     def formatMail(self, first, last):
         """ return the well formatted email adresse for a given firstname and lastname """
-        
+
         if self.format == EmailFormatter.FIRSTDOTLAST:
-            email = '{}.{}{}'.format(first,last,domain)
+            email = '{}.{}{}'.format(first, last, domain)
         elif self.format == EmailFormatter.FDOTLAST:
             email = '{}.{}{}'.format(first[0], last, domain)
         else:
             email = '{}{}{}'.format(first[0], last, domain)
 
         return email
+
 
 emailFormatter = EmailFormatter(args.format or EmailFormatter.FLAST)
 
@@ -102,27 +104,22 @@ class LinkedinUser:
         self.position = position
         self.company = company
 
-    def remove_accents(self, string):
-        """Removes common accent characters.
-        
-        Our goal is to brute force login mechanisms, and I work primary with companies deploying Engligh-language
-        systems. From my experience, user accounts tend to be created without special accented characters. This function
-        tries to swap those out for standard Engligh alphabet.
-        """
+    def remove_accents(self, s):
+        """Removes common accent characters."""
 
-        string = re.sub(r"[àáâãäå]", 'a', string)
-        string = re.sub(r"[èéêë]", 'e', string)
-        string = re.sub(r"[ìíîï]", 'i', string)
-        string = re.sub(r"[òóôõö]", 'o', string)
-        string = re.sub(r"[ùúûü]", 'u', string)
-        string = re.sub(r"[ýÿ]", 'y', string)
-        string = re.sub(r"[ß]", 'ss', string)
-        string = re.sub(r"[ñ]", 'n', string)
+        s = re.sub(r"[àáâãäå]", 'a', s)
+        s = re.sub(r"[èéêë]", 'e', s)
+        s = re.sub(r"[ìíîï]", 'i', s)
+        s = re.sub(r"[òóôõö]", 'o', s)
+        s = re.sub(r"[ùúûü]", 'u', s)
+        s = re.sub(r"[ýÿ]", 'y', s)
+        s = re.sub(r"[ß]", 'ss', s)
+        s = re.sub(r"[ñ]", 'n', s)
 
         return string
 
     def toGophish(self):
-        return self.firstname + ','+self.lastname + ',' + self.position + ',' + self.getMail() + '\n'
+        return self.firstname + ',' + self.lastname + ',' + self.position + ',' + self.getMail() + '\n'
 
     def getMail(self):
         return emailFormatter.formatMail(self.firstname, self.lastname)
@@ -130,7 +127,7 @@ class LinkedinUser:
 
 def login(username, password):
     """Creates a new authenticated session.
-    
+
     Note that a mobile user agent is used.
     Parsing using the desktop results proved extremely difficult, as shared connections would be returned
     in a manner that was indistinguishable from the desired targets.
@@ -145,8 +142,8 @@ def login(username, password):
     anonResponse = session.get('https://www.linkedin.com/')
     try:
         loginCSRF = re.findall(r'name="loginCsrfParam".*?value="(.*?)"', anonResponse.text)[0]
-    except:
-        print('Having trouble with loading the page... try the command again.')
+    except Exception as e:
+        print('Having trouble with loading the page... try the command again. (%s)' % str(e))
         exit()
 
     authPayload = {
@@ -222,7 +219,7 @@ def set_loops(staffCount):
     global searchDepth
     print(okBox + 'Company has ' + str(staffCount) + ' profiles to check. Some may be anonymous.')
     if staffCount > 1000:
-      print(warnBox + 'Note: LinkedIn limits us to a maximum of 1000 results!')
+        print(warnBox + 'Note: LinkedIn limits us to a maximum of 1000 results!')
     loops = int((staffCount / 25) + 1)
     if searchDepth != '' and searchDepth < loops:
         print(warnBox + 'You defined a low custom search depth, so we might not get them all.')
@@ -303,7 +300,7 @@ def write_files(company, list):
     if not os.path.exists(dir):
             os.makedirs(dir)
     gophish = open(dir + '/' + company + '-gophish.csv', 'w')
-    
+
     for u in list:
         gophish.write(u.toGophish())
     gophish.close()
@@ -313,7 +310,10 @@ def send_to_gophish(userList):
     ''' create a group with the forged email addresses into gophish '''
     print(okBox + 'Connecting to the goPhish API')
     api = Gophish(apiKey, host=host, verify=False)
-    targets = [ User(first_name=u.firstname, last_name=u.lastname, email=u.getMail(), position=u.position) for u in userList ]
+    targets = [
+        User(first_name=u.firstname, last_name=u.lastname, email=u.getMail(), position=u.position)
+        for u in userList
+    ]
     group = Group(name='l2gp - ' + company, targets=targets)
     api.groups.post(group)
     print(okBox + 'Group created !')
@@ -323,8 +323,8 @@ def main():
     print(BANNER)
     session = login(username, password)
     session = set_search_csrf(session)
-    companyID,staffCount = get_company_info(company, session)
-    foundUsers  = scrape_info(session, companyID, staffCount, company)
+    companyID, staffCount = get_company_info(company, session)
+    foundUsers = scrape_info(session, companyID, staffCount, company)
     write_files(company, foundUsers)
     if host is not None and apiKey is not None:
         send_to_gophish(foundUsers)
