@@ -116,10 +116,10 @@ class LinkedinUser:
         s = re.sub(r"[ß]", 'ss', s)
         s = re.sub(r"[ñ]", 'n', s)
 
-        return string
+        return s
 
     def toGophish(self):
-        return self.firstname + ',' + self.lastname + ',' + self.position + ',' + self.getMail() + '\n'
+        return "{},{},{},{}\n".format(self.firstname, self.lastname, self.position, self.getMail())
 
     def getMail(self):
         return emailFormatter.formatMail(self.firstname, self.lastname)
